@@ -3,65 +3,91 @@
 #define JUMP_TIME 1
 #define RATE 10
 #define LEVEL_UP = 20
+#define END_TIME
 
-int SPAWN_PROB = 10;
+int SPAWN_PROB;
+int spawnTimer;
+int spawnTimeMin;
+int endTimer;
 
 bool midJump = false;
+int jumpTimer;
+
 bool reconfig = false;
 
-int jumpTimer = 0;
-
 int onSegs[NUM_SEGS];
-int nextSegIndex = 0;
+int nextSegInde;
 
-void setup() {
-  Serial.begin(9600);
+int dieText[12];
 
-  pinMode(JUMP_PIN, INPUT);
+void init() {
+  SPAWN_PROB = 10;
+  spawnTimeMin = 100;
+  midJump = false;
+  reconfig = false;
+  jumpTimer = 0;
+  nextSegIndex = 0;  
 
-  onSegs = malloc(NUM_SEGS * sizeof(int));
-  
   for(int a = 0; a < NUM_SEGS; a++) {
     onSegs = -1;
   }
-
-  onSegs[0] = /* Bottom of 1 */;
   nextSegIndex++;
 
+  onSegs[0] = /* Bottom of 1 */;
+}
 
+void onStart() {
+  Serial.begin(9600);
+  pinMode(JUMP_PIN, INPUT);
   randomSeed(analogRead(0));
+
+  dieText = {
+    /* Letters for "die" */
+  };
+
+  init();
+}
+
+void die() {
+  setAllOff();
+  drawNum(levelCount % 1000);
+
+  if(endTimer > END_TIME) {
+    init();
+  }
+
+  endTimer++;
 }
 
 void reconfigure() {
   /* Left aligns all segs in the onSegs array, 
   * if one of them has gone out of bounds */
 
-  int temp[NUM_SEGS] = malloc(NUM_SEGS * sizeof(int));
+  int temp[NUM_SEGS];
   int tempIndex = 0;
 
   for(int a = 0; a < nextSegIndex; a++) {
-  if(onSegs[a] != -1) {
-      temp[tempIndex] = onSegs[a];
-      tempIndex++;
+    if(onSegs[a] != -1) {
+        temp[tempIndex] = onSegs[a];
+        tempIndex++;
+    }
   }
-  }
-
-  free(onSegs);
   onSegs = temp;
   nextSegIndex = tempIndex;
   reconfig = false;
 }
 
-void loop() {
+void updateLogic() {
   // Detect jump
   if(digitalRead(BUTTON_PIN) && !midJump) {
     onSegs[0] = /* Top of 1 */;
     midJump = true;
   }
 
-  if(jumpTimer >= JUMP_TIME) {
+  if(jumpTimer >= JUMP_TIME && spawnTimer >= spawnTimeMin) {
     onSegs[0] = /* Bot of 1 */;
     midJump = false;
+    spawnTimer = 0;
   }
 
   // Spawn new bullet
@@ -89,6 +115,10 @@ void loop() {
     
     if(onSegs[a] != -1)
       segDraw(onSegs[a]);
+
+    else {
+      segOff(onSegs[a]);
+    }
   }
 
   if(reconfig)
@@ -98,8 +128,8 @@ void loop() {
     jumpTimer++;
   }
 
-  if(levelCount > LEVEL_UP)
+  if(levelCount % 1000 > LEVEL_UP)
     SPAWN_PROB += 5;
-
-  delay(RATE);
+  
+  spawnTimer++;
 }
