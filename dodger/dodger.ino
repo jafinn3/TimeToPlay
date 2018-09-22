@@ -2,13 +2,16 @@
 #define JUMP_PIN
 #define JUMP_TIME 1
 #define RATE 10
-#define LEVEL_UP = 20
+#define LEVEL_UP = 2000
 #define END_TIME
 
 int SPAWN_PROB;
 int spawnTimer;
 int spawnTimeMin;
 int endTimer;
+int levelCount;
+
+int numBullets;
 
 bool midJump = false;
 int jumpTimer;
@@ -20,13 +23,18 @@ int nextSegInde;
 
 int dieText[12];
 
+int topArrayPath[4];
+int botArrayPath[4];
+
 void init() {
   SPAWN_PROB = 10;
   spawnTimeMin = 100;
   midJump = false;
   reconfig = false;
   jumpTimer = 0;
-  nextSegIndex = 0;  
+  nextSegIndex = 0; 
+  levelCount = 0;
+  numBullets = 0; 
 
   for(int a = 0; a < NUM_SEGS; a++) {
     onSegs = -1;
@@ -41,8 +49,18 @@ void onStart() {
   pinMode(JUMP_PIN, INPUT);
   randomSeed(analogRead(0));
 
-  dieText = {
-    /* Letters for "die" */
+  topArrayPath = {
+    DISP_THREE + TOP_R,
+    DISP_TWO + TOP_R,
+    DISP_ONE + TOP_R,
+    ONE_T
+  };
+
+  botArrayPath = {
+    DISP_THREE + BOT_R,
+    DISP_TWO + BOT_R,
+    DISP_ONE + BOT_R,
+    ONE_B
   };
 
   init();
@@ -50,7 +68,7 @@ void onStart() {
 
 void die() {
   setAllOff();
-  drawNum(levelCount % 1000);
+  drawNum(numBullets);
 
   if(endTimer > END_TIME) {
     init();
@@ -77,48 +95,71 @@ void reconfigure() {
   reconfig = false;
 }
 
+int findPos(int arr[], int size, int el) {
+  for(int a = 0; a < size; a++) 
+    if(arr[a] == el)
+      return a;
+  
+  return -1;
+}
+
 void updateLogic() {
   // Detect jump
   if(digitalRead(BUTTON_PIN) && !midJump) {
-    onSegs[0] = /* Top of 1 */;
+    onSegs[0] = ONE_T;
     midJump = true;
   }
 
   if(jumpTimer >= JUMP_TIME && spawnTimer >= spawnTimeMin) {
-    onSegs[0] = /* Bot of 1 */;
+    onSegs[0] = ONE_B;
     midJump = false;
     spawnTimer = 0;
   }
 
   // Spawn new bullet
   if(random(100) < SPAWN_PROB) {
-    int newBullet = /* Top last 8 */;
+    int newBullet = DISP_THREE + TOP_R;
 
     if(random(100) < 50)
-    newBullet = /* Bottom of last 8 */;
+    newBullet = DISP_THREE + BOT_R;
 
     onSegs[nextSegIndex] = newBullet;
     nextSegIndex++;
+    numBullets++;
   }
 
   // Re-position bullets
   for(int a = 1; a < nextSegIndex; a++) 
     if(onSegs[a] != -1) {
-    onSegs[a] = /* Next seg to left */;
+      if(onSegs[a] == ONE_T && midJump || onSegs[a] = ONE_B && !midJump) 
+        die();
 
-    if(onSegs[a] == onSegs[0]) 
-      // die
-    else if(/* next pos is out of bounds to left */) {
-      onSegs[a] = -1;
-      reconfig = true;
-    }
-    
-    if(onSegs[a] != -1)
-      segDraw(onSegs[a]);
+      int topIndex = findPos(topArrayPath, 4, onSegs[a]);
+      int botIndex = findPos(botArrayPath, 4, onSegs[a]);
+      if(topIndex >= 0) {
+        if(topIndex < 3)
+          onSegs[a] = topArrayPath[topIndex + 1)];
+        else {
+          onSegs[a] = -1;
+          reconfig = true;
+        }
+      }
 
-    else {
-      segOff(onSegs[a]);
-    }
+      else if(botIndex >= 0) {
+        if(botIndex < 3)
+          onSegs[a] = botArrayPath[botIndex + 1];
+        else {
+          onSegs[a] = -1;
+          reconfig = true;
+        }
+      }
+      
+      if(onSegs[a] != -1)
+        (onSegs[a]);
+
+      else {
+        segOff(onSegs[a]);
+      }
   }
 
   if(reconfig)
@@ -131,5 +172,6 @@ void updateLogic() {
   if(levelCount % 1000 > LEVEL_UP)
     SPAWN_PROB += 5;
   
+  levelCount++;
   spawnTimer++;
 }

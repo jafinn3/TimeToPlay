@@ -28,17 +28,54 @@ void init() {
 void onStart() {
   Serial.begin(9600);
   winText = {
-    /* Y,
-     * A,
-     * Y
-     */
+    DISP_ONE + TOP_L,
+    DISP_ONE + MID,
+    DISP_ONE + TOP_R,
+    DISP_ONE + BOT_R,
+    DISP_ONE + BOT,
+
+    DISP_TWO + TOP_L,
+    DISP_TWO + MID,
+    DISP_TWO + TOP_R,
+    DISP_TWO + BOT_R,
+    DISP_TWO + BOT_L,
+
+    DISP_THREE + TOP_L,
+    DISP_THREE + MID,
+    DISP_THREE + TOP_R,
+    DISP_THREE + BOT_R,
+    DISP_THREE + BOT
   };
 
   dieText = {
-    /* die */
+    DISP_ONE + MID,
+    DISP_ONE + TOP_R,
+    DISP_ONE + BOT_R,
+    DISP_ONE + BOT,
+    DISP_ONE + BOT_L,
+
+    DISP_TWO + TOP_R,
+    DISP_TWO + BOT_R,
+
+    DISP_THREE + MID,
+    DISP_THREE + TOP_R,
+    DISP_THREE + BOT_R,
+    DISP_THREE + BOT,
+    DISP_THREE + BOT_L
   };
 
-  loopSegs = {/* Bot left 8, top left 8, ... */};
+  loopSegs = {
+    DISP_ONE + BOT_L,
+    DISP_ONE + TOP_L,
+    DISP_ONE + TOP,
+    DISP_TWO + TOP,
+    DISP_THREE + TOP,
+    DISP_THREE + TOP_R,
+    DISP_THREE + BOT_R,
+    DISP_THREE + BOT,
+    DISP_TWO + BOT,
+    DISP_ONE + BOT
+  };
   pinMode(BUTTON_PIN, INPUT);
   init();
 }
@@ -47,7 +84,7 @@ void win() {
   setAllOff();
   // Print "yay"
   for(int a = 0; a < 14; a++) {
-    segDraw(winText[a]);
+    segOn(winText[a]);
   }
 
   if(endTimer > END_TIME) {
@@ -85,7 +122,7 @@ void updateLogic() {
       loser = true;
     }
 
-    segDraw(loopSegs[loopIndex]);
+    segOn(loopSegs[loopIndex]);
     if(loopIndex != 0)
       segOff(loopSegs[loopIndex - 1]);
     else
@@ -99,11 +136,11 @@ void updateLogic() {
     }
 
     if(blinkOn) {
-      segDraw(/* bot 1 t*/);
+      segOn(ONE_B);
     }
 
     else {
-      segOff(/* bot 1 */);
+      segOff(ONE_B);
     }
 
     timer++;
